@@ -11,26 +11,53 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 contract WhitelistNFT is ERC1155, Ownable {
     using ECDSA for bytes32;
 
+    struct EIP712Domain {
+        string name;
+        string version;
+        uint256 chainId;
+        address verifyingContract;
+    }
+
+    struct Minter {
+        address wallet;
+    }
+
     address private signatureAddress = address(0);
+    bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256(
+        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+    );
+    bytes32 public constant MINTER_TYPEHASH = keccak256(
+        "Minter(address wallet)"
+    );
     bytes32 public DOMAIN_SEPARATOR;
     bytes32 public merkleRoot;
-    bytes32 public constant MINTER_TYPEHASH =
-        keccak256("Minter(address wallet)");
 
     mapping(address => bool) public whitelistClaimed;
 
     constructor(string memory _baseURI) ERC1155(_baseURI) {
-        DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                keccak256(
-                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-                ),
-                keccak256(bytes("WhitelistNFT")),
-                keccak256(bytes("1")),
-                block.chainid,
-                address(this)
-            )
-        );
+        DOMAIN_SEPARATOR = hash(EIP712Domain({
+            name: "WhitelistNFT",
+            version: "1",
+            chainId: block.chainid,
+            verifyingContract: address(this)
+        }));
+    }
+
+    function hash(EIP712Domain eip712Domain) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            EIP712DOMAIN_TYPEHASH,
+            keccak256(bytes(eip712Domain.name)),
+            keccak256(bytes(eip712Domain.version)),
+            eip712Domain.chainId,
+            eip712Domain.verifyingContract
+        ));
+    }
+
+    function hash(Minter minter) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+            MINTER_TYPEHASH,
+            minter.wallet,
+        ));
     }
 
     function setSignatureAddress(address _signatureAddress)
@@ -44,15 +71,14 @@ contract WhitelistNFT is ERC1155, Ownable {
         merkleRoot = _merkleRoot;
     }
 
-    modifier verifySignature(bytes calldata signature) {
+    modifier verifySignature(bytes calldata signature, address minter) {
         require(signatureAddress != address(0), "whitelist not enabled");
-        bytes32 digest = keccak256(
-            abi.encodePacked(
+        Minter minter = Minter({wallet: minter});
+        
+        bytes32 digest = keccak256(abi.encodePacked(
                 "\x19\x01",
                 DOMAIN_SEPARATOR,
-                keccak256(abi.encode(MINTER_TYPEHASH, msg.sender))
-            )
-        );
+                hash(minter)));
         address recoveredAddress = digest.recover(signature);
         require(recoveredAddress == signatureAddress, "Invalid Signature");
         _;
@@ -63,7 +89,7 @@ contract WhitelistNFT is ERC1155, Ownable {
         bytes32[] calldata merkleProof,
         uint256 tokenId,
         uint256 amount
-    ) external verifySignature(signature) {
+    ) external verifySignature(signature, msg.sender) {
         require(!whitelistClaimed[msg.sender], "Address had already claimed.");
         bytes32 lead = keccak256(abi.encodePacked(msg.sender));
         require(MerkleProof.verify(merkleProof, merkleRoot, lead), "Invalid proof.");

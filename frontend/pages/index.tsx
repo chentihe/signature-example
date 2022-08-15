@@ -9,7 +9,8 @@ const mockWhiteList = [
   "0x78072bb36cb0c13bea63132e02f2b8d49dad6089",
   "0xcc9e910d3077775604923221c19181ea92b1ae60",
   "0x73a0c458accdcbfee575c28ad8d87fb21f75cfa9",
-  "0xEb4fc229Bc49f2271E828D343c8fCd9A3a6E4c98"
+  "0x1f51CdA47e12530A110BAD70e4CD0edab81cA343",
+  "0xBFE502cCedC8C0ab94D153cAF66d8b5dc6ef950e"
 ];
 
 const WHITELIST_NFT_ABI = [
@@ -513,7 +514,7 @@ const WHITELIST_NFT_ABI = [
     "stateMutability": "view",
     "type": "function"
   }
-]
+];
 
 const Home: NextPage = () => {
   let domain, provider, signer: ethers.providers.Provider | ethers.Signer | undefined;
@@ -619,7 +620,7 @@ const Home: NextPage = () => {
   }
 
   const mintNFT = async () => {
-    const contract = new ethers.Contract("0x5AFd4810ffaB55cA341737e5BA568Ac02da16077", WHITELIST_NFT_ABI, signer!);
+    const contract = new ethers.Contract("0x59cc8A2EB5804a9a1675C9152b9e6Ac7D107357B", WHITELIST_NFT_ABI, signer!);
     try {
       const mint = await contract.mint(signature, merkleproof, tokenId, amount);
       await mint.wait();
