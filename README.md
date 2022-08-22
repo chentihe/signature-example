@@ -7,7 +7,8 @@ npm install
 ```
 
 Merkle Root as Whitelist mechanism
-EIP712 to restrict that the user can only mint NFT via frontend
+
+Using EIP712 to restrict the user to mint NFT via frontend
 
 ## Backend
 
