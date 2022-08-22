@@ -1,14 +1,20 @@
 # signature-example
 
+This repo is to demonstrate how to prevent users from minting NFT in other ways.
+
+- Using Merkle Root as Whitelist mechanism
+
+this will save the gas fee of updating white list on the contract
+
+- Using EIP712 to let users can only mint NFT via frontend.
+
+the signature will be provided only from backend, in this way, users are able to mint NFT via frontend.
+
 ## Contract
 
 ```
 npm install
 ```
-
-Merkle Root as Whitelist mechanism
-
-Using EIP712 to restrict the user to mint NFT via frontend
 
 ## Backend
 
